@@ -4,7 +4,8 @@ import _ from "lodash";
 const createInitialState = () => ({
   result: 0,
   number: null,
-  operation: null
+  operation: null,
+  lastPressed: null
 });
 
 const operateByOperation = {
@@ -47,7 +48,7 @@ const OperateButton = ({ operation, onOperationEntry }) => (
 const OperateButtons = props => (
   <div>
     {["+", "-", "*", "/"].map(operation => (
-      <OperateButton operation={operation} {...props} />
+      <OperateButton key={operation} operation={operation} {...props} />
     ))}
   </div>
 );
@@ -63,6 +64,16 @@ const ClearButton = ({ onClearEntry }) => (
     <button onClick={onClearEntry}>C</button>
   </div>
 );
+
+class DisplayPane extends React.Component {
+  getDisplayNumber() {
+    const { result, number } = this.props;
+    return _.isNil(number) ? result : number;
+  }
+  render() {
+    return <p>DISPLAY: {this.getDisplayNumber()}</p>;
+  }
+}
 
 class App extends Component {
   constructor(props) {
@@ -81,15 +92,16 @@ class App extends Component {
   }
 
   handleOperationEntry = operation => {
-    this.setState({ operation });
+    this.setState({ operation, lastPressed: "operation" });
   };
 
   handleNumberEntry = number => {
-    if (_.isNil(this.state.operation)) {
-      this.setState({ result: number });
-    } else {
-      this.setState({ number });
-    }
+    const { result, lastPressed } = this.state;
+    this.setState({
+      result: _.isNil(lastPressed) ? number : result,
+      number,
+      lastPressed: "number"
+    });
   };
 
   handleEqualsEntry = () => {
@@ -101,11 +113,10 @@ class App extends Component {
   };
 
   render() {
-    const { result } = this.state;
     return (
       <div>
         <pre>{JSON.stringify(this.state, null, 4)}</pre>
-        <p>RESULT: {result}</p>
+        <DisplayPane {...this.state} />
         <NumberButtons onNumberEntry={this.handleNumberEntry} />
         <OperateButtons onOperationEntry={this.handleOperationEntry} />
         <EqualsButton onEqualsEntry={this.handleEqualsEntry} />
